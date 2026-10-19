@@ -180,15 +180,19 @@ function playerOf(s,id){ return s.players.find(p=>p.id===id); }
 function countKind(list,k){ let n=0; for(const c of list) if(c===k) n++; return n; }
 
 // Setup: deal all 64 cards evenly; remainder goes aside face down. Random first parent.
+// 2 players: remove 10 cards, set 12 aside as a dummy pile, deal the other 42 (21 each).
 function newGame(players, rng=Math.random, deck){
   const n = players.length;
   if(n<2 || n>6) throw new Error("プレイ人数は2〜6人です");
   deck = deck || shuffle(makeDeck(), rng);
+  let removed = [], dummy = [];
+  if(n===2){ removed = deck.slice(0,10); dummy = deck.slice(10,22); deck = deck.slice(22); }
   const per = Math.floor(deck.length / n);
   const s = {
     phase:"propose",
     players: players.map((p,i)=>({id:p.id, name:p.name, hand:deck.slice(i*per,(i+1)*per), open:[]})),
     aside: deck.slice(n*per),
+    removed, dummy, twoPlayer: n===2,
     parent: players[Math.floor(rng()*n)].id,
     pending: null, last: null, loser: null, reason: null, log: [], turn: 1
   };
@@ -258,12 +262,23 @@ function applyAction(state, actor, a){
     const truth = pd.card===pd.claim;
     const correct = (a.guess==="true")===truth;
     const loser = correct ? pd.from : pd.holder;
-    playerOf(s,loser).open.push(pd.card);
-    s.last = {card:pd.card, claim:pd.claim, guess:a.guess, correct, caller:pd.holder, from:pd.from, loser, turn:s.turn};
-    pushLog(s,{t:"call",by:pd.holder,guess:a.guess,card:pd.card,claim:pd.claim,correct,loser,turn:s.turn});
+    const lp = playerOf(s,loser);
+    lp.open.push(pd.card);
+    s.last = {card:pd.card, claim:pd.claim, guess:a.guess, correct, caller:pd.holder, from:pd.from, loser, turn:s.turn, drawn:null};
+    const entry = {t:"call",by:pd.holder,guess:a.guess,card:pd.card,claim:pd.claim,correct,loser,turn:s.turn};
+    pushLog(s,entry);
     s.pending = null;
-    if(countKind(playerOf(s,loser).open, pd.card) >= LOSE_COUNT){
+    if(countKind(lp.open, pd.card) >= LOSE_COUNT){
       s.phase="over"; s.loser=loser; s.reason="four"; s.loseKind=pd.card; return s;
+    }
+    // 2-player penalty: the loser also flips the top card of the dummy pile into their open cards.
+    if(s.twoPlayer){
+      if(!s.dummy || !s.dummy.length){ s.phase="over"; s.loser=loser; s.reason="dummy"; return s; }
+      const drawn = s.dummy.shift();
+      lp.open.push(drawn); s.last.drawn = drawn; entry.drawn = drawn;
+      if(countKind(lp.open, drawn) >= LOSE_COUNT){
+        s.phase="over"; s.loser=loser; s.reason="four"; s.loseKind=drawn; return s;
+      }
     }
     s.parent = loser; s.phase = "propose"; s.turn++;
     return checkParent(s);
@@ -461,6 +476,7 @@ const RULES = `<ol>
   <li>渡された人は<b>本当／ウソ</b>を言い当てるか、カードをこっそり見て、<b>まだ見ていない人</b>に宣言し直して回します。見たら必ず回します。</li>
   <li>当たれば渡した人が、外れれば答えた人がカードを引き取り、自分の前に表向きで置きます。引き取った人が次の親です。</li>
   <li>同じ動物が<b>4枚</b>表向きにそろうか、親の番に手札が0枚だと負け。その1人以外の全員が勝ちです。</li>
+  <li><b>2人のとき：</b>10枚を除外し、12枚を「ダミーの山札」にして、残り42枚を21枚ずつ配ります。カードを引き取った人は山札の一番上も1枚めくって自分の場に置きます。引くときに山札がなければ負けです。回す相手がいないので、毎回必ず見破ります。</li>
 </ol>`;
 
 function homeView(){
@@ -501,8 +517,9 @@ function lobbyView(){
 
 const nameOf = (g,id) => { const p=playerOf(g,id); return p?p.name:"?"; };
 
-function barHTML(remote){
-  return `<div class="bar"><div class="ttl">ゴキブリポーカー${remote?`<span>${esc(ui.room.code)}</span>`:""}</div>
+function barHTML(remote, g){
+  const pile = g && g.twoPlayer ? `<span class="tag s" style="font-size:11px;line-height:20px;padding:0 8px" title="ダミーの山札">山札 ${(g.dummy||[]).length}</span>` : "";
+  return `<div class="bar"><div class="ttl">ゴキブリポーカー${remote?`<span>${esc(ui.room.code)}</span>`:""}</div>${pile}
     <button class="ghost sm" data-a="sheet" data-v="log">流れ</button>
     <button class="ghost sm" data-a="sheet" data-v="rules">ルール</button>
     ${remote?"":`<button class="ghost sm" data-a="home">終了</button>`}</div>`;
@@ -530,12 +547,12 @@ function revealTable(g){
   return `<div class="table">${cardHTML(L.card,true)}<div class="txt">
     <div class="k1">${esc(nameOf(g,L.caller))}は「${L.guess==="true"?"本当":"ウソ"}」と答えた</div>
     <div class="k2">「${kname(L.claim)}」は <span class="stamp ${truth?"t":"l"}">${truth?"本当":"ウソ"}</span></div>
-    <div class="k3">${L.correct?"見破り成功":"見破り失敗"}　→ <b style="color:var(--ink)">${esc(nameOf(g,L.loser))}</b>が引き取り</div></div></div>`;
+    <div class="k3">${L.correct?"見破り成功":"見破り失敗"}　→ <b style="color:var(--ink)">${esc(nameOf(g,L.loser))}</b>が引き取り${L.drawn?`。山札から${glyph(L.drawn)}${kname(L.drawn)}も追加`:""}</div></div></div>`;
 }
 
 function tableHTML(g, me){
   if(g.phase==="over"){
-    const why = g.reason==="four" ? `${glyph(g.loseKind)} ${kname(g.loseKind)}が4枚そろいました` : "親の番に手札がありませんでした";
+    const why = g.reason==="four" ? `${glyph(g.loseKind)} ${kname(g.loseKind)}が4枚そろいました` : g.reason==="dummy" ? "引くはずのダミーの山札がなくなりました" : "親の番に手札がありませんでした";
     return `<div class="table col">${g.last?cardHTML(g.last.card,true):""}<div class="txt"><div class="label">GAME OVER</div>
       <div class="over-t">${esc(nameOf(g,g.loser))}の負け</div><div class="k3">${why}。ほかの全員の勝ちです。</div></div></div>`;
   }
@@ -618,7 +635,7 @@ function handHTML(g, me){
 
 function gameView(g, me, remote){
   const claiming = g.phase!=="over" && currentActor(g)===me && ui.sel.step==="claim" && (g.phase==="propose" || (g.pending && g.pending.peeked));
-  return `<div class="game ${claiming?"claiming":""}">${barHTML(remote)}${oppsHTML(g,me)}${tableHTML(g,me)}${actHTML(g,me,remote)}${handHTML(g,me)}</div>`;
+  return `<div class="game ${claiming?"claiming":""}">${barHTML(remote,g)}${oppsHTML(g,me)}${tableHTML(g,me)}${actHTML(g,me,remote)}${handHTML(g,me)}</div>`;
 }
 
 function localView(){
@@ -627,7 +644,7 @@ function localView(){
     const nm=esc(nameOf(g,actor));
     const top = g.last && g.last.turn===g.turn-1 && g.phase==="propose" ? revealTable(g)
       : `<div class="table col"><div class="txt"><div class="k1">次の手番</div><div class="k2">${nm}さんに<br>スマホを渡してください</div><div class="k3">${g.phase==="propose"?"親としてカードを出します":"カードが回ってきました"}</div></div></div>`;
-    return `<div class="game">${barHTML(false)}${oppsHTML(g,null)}${top}
+    return `<div class="game">${barHTML(false,g)}${oppsHTML(g,null)}${top}
       <div class="act"><div class="q"><span>${nm}さん以外は画面を見ないでください</span></div><button class="primary" data-a="confirm">${nm}です。手札を見る</button></div>
       <div class="handbar" style="grid-template-columns:1fr"><span class="dim" style="font-size:13px;text-align:center;padding:10px">手札は隠れています</span></div></div>`;
   }
@@ -642,7 +659,7 @@ function sheetHTML(){
   else{
     const lines=g.log.slice().reverse().map(e=> e.t==="give"
       ? `${esc(nameOf(g,e.from))} → ${esc(nameOf(g,e.to))}「${kname(e.claim)}」`
-      : `${esc(nameOf(g,e.by))}「${e.guess==="true"?"本当":"ウソ"}」→ 中身は${kname(e.card)}。<b style="color:var(--ink)">${esc(nameOf(g,e.loser))}</b>が引き取り`);
+      : `${esc(nameOf(g,e.by))}「${e.guess==="true"?"本当":"ウソ"}」→ 中身は${kname(e.card)}。<b style="color:var(--ink)">${esc(nameOf(g,e.loser))}</b>が引き取り${e.drawn?`（山札から${kname(e.drawn)}）`:""}`);
     body=`<h3 style="font-size:17px">これまでの流れ</h3><div class="log">${lines.length?lines.map(l=>`<div>${l}</div>`).join(""):"まだ何も起きていません"}</div>`;
   }
   return `<div class="sheet" data-a="closesheet"><div class="in" data-stop="1">${body}<button data-a="closesheet">閉じる</button></div></div>`;
