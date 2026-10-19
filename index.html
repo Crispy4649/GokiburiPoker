@@ -11,7 +11,7 @@
 :root{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
 body{margin:0}
 [hidden]{display:none!important}
-/* Layout: menus scroll like a page; during play the screen is one fixed table — bar, opponents, table, action, hand — sized to the viewport. */
+/* Layout: menus scroll like a page; during play the screen is a felt card table seen from your seat — opponents around the rim, you at the bottom, your hand fanned below. */
 :root{
   --felt:#231a1f; --felt-2:#2f2329; --felt-3:#3d2e35; --line:#4d3b43;
   --ink:#f3ebe1; --ink-dim:#b9a9a6; --paper:#efe5d6; --paper-ink:#2a1e1c;
@@ -55,71 +55,110 @@ details ol{padding-left:20px;margin:8px 0 0}
 .mast h1 small{display:block;font-family:var(--f-body);font-size:12px;letter-spacing:.2em;color:var(--mustard);font-weight:700}
 .code{font-family:var(--f-display);font-size:22px;letter-spacing:.18em;color:var(--mustard)}
 
-/* ---------- play screen ---------- */
-.game{height:100%;display:flex;flex-direction:column;gap:clamp(4px,1vh,8px);min-height:0}
-.bar{display:flex;align-items:center;gap:6px;flex:none}
-.bar .ttl{font-family:var(--f-display);font-size:15px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bar .ttl span{color:var(--mustard);letter-spacing:.14em;font-size:13px;margin-left:6px}
+/* ---------- play screen: a felt table seen from your seat ---------- */
+:root{
+  --room:#120d0c; --felt-a:#2f6e5a; --felt-b:#1d4a3c; --felt-c:#11302a;
+  --wood-a:#6b4228; --wood-b:#3e2416; --plate:rgba(12,10,9,.72);
+}
+html.play body{background:var(--room);background-image:radial-gradient(ellipse at 50% 30%,#2a1c18,var(--room) 70%)}
+.game{height:100%;display:flex;flex-direction:column;gap:clamp(4px,.9vh,8px);min-height:0}
 
-.opps{display:grid;gap:5px;flex:none}
-.opp{background:var(--felt-2);border:1px solid var(--line);border-radius:10px;padding:4px 7px;min-width:0;display:flex;flex-direction:column;gap:1px}
-.opp.me{border-color:var(--mustard)}
-.opp.act{background:color-mix(in srgb,var(--mustard) 16%,var(--felt-2))}
-.opp.lost{border-color:var(--lie);background:color-mix(in srgb,var(--lie) 18%,var(--felt-2))}
-.opp .nm{font-weight:700;font-size:13px;display:flex;gap:4px;align-items:center;min-width:0}
-.opp .nm b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;font-weight:700}
-.opp .meta{font-size:11px;color:var(--ink-dim);font-variant-numeric:tabular-nums;white-space:nowrap}
-.opp .opens{display:flex;flex-wrap:wrap;gap:1px 6px;font-size:12px;font-variant-numeric:tabular-nums;min-height:17px;line-height:17px}
-.opp .opens .c3{color:var(--lie);font-weight:700}
-.opp .opens .c2{color:var(--mustard)}
+.hud{display:flex;align-items:center;gap:6px;flex:none;font-size:12px;color:var(--ink-dim)}
+.hud .room{font-weight:700;white-space:nowrap}
+.hud .room b{font-family:var(--f-display);font-weight:400;color:var(--mustard);letter-spacing:.14em;font-size:14px}
+.hud .chip{background:var(--felt-3);border-radius:999px;padding:1px 8px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.hud .sp{flex:1}
+
+.felt{position:relative;flex:1 1 auto;min-height:0;border-radius:clamp(26px,9vw,60px);
+  background:radial-gradient(ellipse at 50% 42%,var(--felt-a),var(--felt-b) 58%,var(--felt-c));
+  border:clamp(6px,2vw,10px) solid var(--wood-b);
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.05),inset 0 10px 40px rgba(0,0,0,.45),0 0 0 2px var(--wood-a),0 10px 30px rgba(0,0,0,.6);
+  overflow:hidden}
+.felt::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.18;
+  background-image:repeating-radial-gradient(circle at 30% 20%,rgba(255,255,255,.06) 0 1px,transparent 1px 3px)}
+.felt::after{content:"";position:absolute;left:50%;top:47%;width:44%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;
+  border:1px dashed rgba(255,255,255,.08);pointer-events:none}
+
+.seat{position:absolute;transform:translate(-50%,-50%);width:min(32%,128px);display:flex;flex-direction:column;align-items:center;gap:3px;z-index:2;
+  background:none;border:0;padding:0;min-height:0;color:var(--ink);font-weight:400;border-radius:12px}
+.seat.bottom{left:50%;top:auto;bottom:6px;transform:translateX(-50%);width:92%}
+.plate{display:flex;align-items:center;gap:4px;max-width:100%;background:var(--plate);border-radius:999px;padding:2px 8px 2px 2px;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+.av{width:22px;height:22px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;background:var(--sc);color:#1b1210}
+.pn{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .tag{font-size:10px;padding:0 5px;border-radius:999px;background:var(--felt-3);color:var(--ink-dim);font-weight:700;flex:none;line-height:16px}
 .tag.p{background:var(--mustard);color:var(--paper-ink)}
 .tag.h{background:var(--ink);color:var(--paper-ink)}
-.tag.s{background:transparent;border:1px solid var(--line)}
+.tag.s{background:transparent;border:1px solid rgba(255,255,255,.25);color:var(--ink)}
+.seat.active .plate{box-shadow:0 0 0 2px var(--ink),0 2px 10px rgba(0,0,0,.5)}
+.seat.lost .plate{background:color-mix(in srgb,var(--lie) 60%,#000)}
+.seat.selectable{cursor:pointer}
+.seat.selectable .plate{box-shadow:0 0 0 3px var(--mustard),0 0 18px color-mix(in srgb,var(--mustard) 70%,transparent)}
+.hc2{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;color:var(--ink-dim);flex:none;font-variant-numeric:tabular-nums}
+.hc2 .bk{width:9px;height:13px;border-radius:2px;border:1px solid var(--mustard);background:repeating-linear-gradient(45deg,#3d2e35 0 2px,#2a2026 2px 4px)}
+.backs{display:flex;align-items:center;height:22px}
+.backs .bk{width:14px;height:20px;border-radius:3px;margin-left:-7px;border:1px solid var(--mustard);
+  background:repeating-linear-gradient(45deg,#3d2e35 0 3px,#2a2026 3px 6px);box-shadow:0 1px 2px rgba(0,0,0,.5)}
+.backs .bk:nth-child(1){transform:rotate(-12deg)}.backs .bk:nth-child(3){transform:rotate(12deg)}
+.backs em{font-style:normal;font-size:11px;font-weight:700;margin-left:4px;font-variant-numeric:tabular-nums;text-shadow:0 1px 2px #000}
+.mcs{display:flex;flex-wrap:wrap;justify-content:center;gap:3px;min-height:26px;align-items:flex-start}
+.mcs .none{font-size:10px;color:rgba(255,255,255,.35);line-height:26px}
+.mc{--c:#888;position:relative;width:clamp(18px,5.4vw,24px);aspect-ratio:5/7;border-radius:3px;background:var(--paper);border:2px solid var(--c);
+  display:grid;place-items:center;box-shadow:0 1px 2px rgba(0,0,0,.5)}
+.mc i{font-style:normal;font-size:clamp(10px,3vw,13px);line-height:1}
+.mc b{position:absolute;bottom:-6px;right:-6px;min-width:15px;height:15px;border-radius:999px;background:var(--paper-ink);color:var(--paper);font-size:10px;display:grid;place-items:center;font-variant-numeric:tabular-nums}
+.mc.danger{box-shadow:0 0 0 2px var(--lie),0 0 10px var(--lie)}
+.mc.danger b{background:var(--lie);color:#fff}
+.mc.new{animation:glow 1.2s ease-in-out infinite alternate}
+@keyframes glow{from{box-shadow:0 0 0 2px var(--mustard)}to{box-shadow:0 0 0 2px var(--mustard),0 0 14px var(--mustard)}}
 
-.table{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;gap:clamp(10px,3vw,18px);
-  background:color-mix(in srgb,var(--paper) 7%,var(--felt));border:1px solid var(--line);border-radius:16px;padding:8px 12px;overflow:hidden;text-align:left}
-.table .txt{min-width:0;display:flex;flex-direction:column;gap:2px;max-width:60%}
-.table .k1{font-size:12px;color:var(--ink-dim)}
-.table .k2{font-family:var(--f-display);font-size:clamp(16px,2.8vh,22px);line-height:1.25}
-.table .k3{font-size:12px;color:var(--ink-dim)}
-.table.col{flex-direction:column;text-align:center}
-.table.col .txt{max-width:100%;align-items:center}
-.over-t{font-family:var(--f-display);font-size:clamp(22px,4vh,30px);color:var(--lie)}
+.tc{--c:#888;height:clamp(54px,12.5vh,104px);aspect-ratio:5/7;flex:none;border-radius:7px;background:var(--paper);color:var(--paper-ink);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border:3px solid var(--c);box-shadow:0 4px 10px rgba(0,0,0,.5)}
+.tc .g{font-size:clamp(22px,5.4vh,44px);line-height:1}
+.tc .n{font-size:clamp(9px,1.4vh,12px);font-weight:700}
+.tc.back{border-color:var(--mustard);background:repeating-linear-gradient(45deg,#3d2e35 0 6px,#2a2026 6px 12px)}
+.tc.back::after{content:"?";font-family:var(--f-display);font-size:clamp(20px,5vh,40px);color:var(--mustard)}
 
-.card{--c:#888;height:clamp(64px,18vh,150px);aspect-ratio:5/7;flex:none;border-radius:8px;background:var(--paper);color:var(--paper-ink);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:3px solid var(--c);box-shadow:0 3px 0 rgba(0,0,0,.35)}
-.card .g{font-size:clamp(26px,7vh,56px);line-height:1}
-.card .n{font-size:clamp(9px,1.6vh,13px);font-weight:700}
-.card.back{background:repeating-linear-gradient(45deg,var(--felt-3) 0 6px,var(--felt-2) 6px 12px);border-color:var(--mustard)}
-.card.back::after{content:"?";font-family:var(--f-display);font-size:clamp(24px,6vh,48px);color:var(--mustard)}
-.stamp{display:inline-block;font-family:var(--f-display);padding:0 8px;border:2px solid currentColor;border-radius:6px;transform:rotate(-4deg)}
+.fly{position:absolute;transform:translate(-50%,-50%);z-index:3;display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none}
+.bubble{background:var(--paper);color:var(--paper-ink);border-radius:10px;padding:2px 10px;font-size:13px;font-weight:700;white-space:nowrap;box-shadow:0 3px 8px rgba(0,0,0,.45);position:relative}
+.bubble::before{content:"";position:absolute;left:50%;top:-5px;width:10px;height:10px;background:var(--paper);transform:translateX(-50%) rotate(45deg)}
+.bubble b{font-weight:700;color:#7a5a50;font-size:11px;margin-right:4px}
+.bubble span{position:relative}
+
+.center{position:absolute;left:50%;top:47%;transform:translate(-50%,-50%);z-index:4;width:84%;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.hint{background:var(--plate);border-radius:12px;padding:6px 12px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;max-width:100%}
+.hint.wait{font-weight:500;color:var(--ink-dim)}
+.reveal{display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.28);border-radius:14px;padding:8px 12px;text-align:left;max-width:100%}
+.reveal .rt{display:flex;flex-direction:column;gap:2px;min-width:0;font-size:12px}
+.reveal .big{font-family:var(--f-display);font-size:clamp(15px,2.5vh,20px);line-height:1.3}
+.stamp{display:inline-block;font-family:var(--f-display);padding:0 8px;border:2px solid currentColor;border-radius:6px;transform:rotate(-4deg);background:rgba(0,0,0,.25)}
 .stamp.t{color:var(--truth)}.stamp.l{color:var(--lie)}
+.pile{position:absolute;left:84%;top:47%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--ink-dim);z-index:1}
+.pile .stack{position:relative;width:30px;height:42px}
+.pile .stack span{position:absolute;inset:0;border-radius:4px;border:1px solid var(--mustard);background:repeating-linear-gradient(45deg,#3d2e35 0 4px,#2a2026 4px 8px)}
+.pile .stack span:nth-child(2){transform:translate(-2px,-2px)}.pile .stack span:nth-child(3){transform:translate(-4px,-4px)}
+.over-t{font-family:var(--f-display);font-size:clamp(22px,4.4vh,32px);color:#ffb3a8;text-shadow:0 2px 0 #000}
 
-.act{flex:none;display:flex;flex-direction:column;gap:6px}
-.act .q{font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;min-height:24px}
-.act .q span{flex:1;min-width:0}
-.steps{display:flex;gap:4px;font-size:11px;color:var(--ink-dim)}
-.steps i{font-style:normal;padding:1px 6px;border-radius:999px;background:var(--felt-3)}
-.steps i.on{background:var(--mustard);color:var(--paper-ink);font-weight:700}
-.steps i.done{color:var(--ink)}
+.action{flex:none;display:flex;flex-direction:column;gap:6px;background:var(--felt-2);border:1px solid var(--line);border-radius:14px;padding:8px}
+.action .q{font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;min-height:24px}
+.action .q span{flex:1;min-width:0}
 .claims{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
-.claims button{padding:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;font-size:11px;min-height:clamp(42px,6.6vh,56px);border:2px solid transparent;line-height:1.2}
+.claims button{padding:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;min-height:clamp(40px,6.4vh,54px);border:2px solid transparent;line-height:1.2}
 .claims button .g{font-size:clamp(18px,3vh,24px)}
 .claims button[aria-pressed=true]{border-color:var(--mustard);background:color-mix(in srgb,var(--mustard) 20%,var(--felt-3))}
-.targets{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:5px}
-.targets button{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-.handbar{flex:none;display:grid;grid-template-columns:repeat(8,1fr);gap:4px;padding:6px;background:var(--felt-2);border:1px solid var(--line);border-radius:12px}
-.hc{--c:#888;position:relative;border-radius:7px;background:var(--paper);color:var(--paper-ink);border:2px solid var(--c);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3px 0 2px;min-height:clamp(46px,7.5vh,62px);min-width:0;font-weight:700}
-button.hc{min-height:clamp(46px,7.5vh,62px);padding:3px 0 2px;background:var(--paper);color:var(--paper-ink);border-radius:7px}
-.hc .g{font-size:clamp(18px,3.2vh,26px);line-height:1.1}
-.hc .n{font-size:9px;white-space:nowrap;letter-spacing:-.02em}
-.hc .cnt{position:absolute;top:-6px;right:-5px;background:var(--paper-ink);color:var(--paper);border-radius:999px;font-size:11px;min-width:18px;height:18px;display:grid;place-items:center;border:2px solid var(--felt-2);font-variant-numeric:tabular-nums}
-.hc.zero{opacity:.18;filter:grayscale(1)}
-.hc[aria-pressed=true]{box-shadow:0 0 0 3px var(--mustard);transform:translateY(-3px)}
-.hc.pick{animation:none}
+.hand{flex:none;display:flex;justify-content:center;align-items:flex-end;padding:0 0 8px 6px;position:relative;height:calc(min(56px,8.6vh) * 1.4 + 34px)}
+.hcard{--c:#888;position:relative;width:min(56px,8.6vh,calc((100vw - 64px) / var(--n) + 6px));aspect-ratio:5/7;margin-left:-6px;flex:none;
+  border-radius:7px;background:var(--paper);color:var(--paper-ink);border:3px solid var(--c);padding:0;min-height:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;font-weight:700;
+  transform:translateY(var(--dy)) rotate(var(--r));transform-origin:50% 100%;box-shadow:-2px 3px 6px rgba(0,0,0,.45)}
+.hcard .g{font-size:clamp(18px,3.4vh,26px);line-height:1.1}
+.hcard .n{font-size:9px;white-space:nowrap;letter-spacing:-.03em}
+.hcard .cnt{position:absolute;top:-7px;right:-6px;background:var(--paper-ink);color:var(--paper);border-radius:999px;font-size:11px;min-width:19px;height:19px;display:grid;place-items:center;border:2px solid var(--room);font-variant-numeric:tabular-nums}
+button.hcard{cursor:pointer}
+button.hcard:hover{transform:translateY(calc(var(--dy) - 6px)) rotate(var(--r))}
+.hcard[aria-pressed=true]{transform:translateY(calc(var(--dy) - 16px)) rotate(var(--r));box-shadow:0 0 0 3px var(--mustard),0 8px 14px rgba(0,0,0,.5);z-index:2}
+.hand .hlabel{position:absolute;left:0;top:0;font-size:11px;color:var(--ink-dim)}
+.hand.empty{align-items:center;color:var(--ink-dim);font-size:13px}
 .k-bat{--c:#6c5fa8}.k-fly{--c:#5d8a8a}.k-roach{--c:#8a5a2e}.k-toad{--c:#5f8d3e}
 .k-rat{--c:#7a7a80}.k-scorpion{--c:#b4462f}.k-stinkbug{--c:#3f7d5a}.k-spider{--c:#2e2e3a}
 
@@ -134,18 +173,22 @@ button.hc{min-height:clamp(46px,7.5vh,62px);padding:3px 0 2px;background:var(--p
 .pl{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;background:var(--felt-2);border:1px solid var(--line)}
 .pl.me{border-color:var(--mustard)}
 .avatar{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--felt-3);font-weight:700;flex:none}
-
-@media (max-height:540px){ .game.claiming .handbar{display:none} }
-@media (max-height:600px){
-  .opp .meta{display:none}
-  .table{padding:4px 10px}
-  .steps{display:none}
-}
-@media (prefers-reduced-motion:no-preference){
-  .hc{transition:transform .12s,box-shadow .12s}
-  .flip{animation:flip .4s ease-out}
-  @keyframes flip{from{transform:rotateY(90deg)}to{transform:none}}
-}
+@media (max-height:600px){ .backs{height:16px} .backs .bk{width:11px;height:15px} .center{gap:4px} }
+.emobtn{position:absolute;right:8px;bottom:8px;z-index:5;width:42px;height:42px;min-height:0;padding:0;border-radius:50%;font-size:22px;
+  background:var(--plate);border:1px solid rgba(255,255,255,.18);box-shadow:0 3px 8px rgba(0,0,0,.45);display:grid;place-items:center}
+.emote{position:fixed;z-index:40;pointer-events:none;transform:translate(-50%,-100%);white-space:nowrap}
+.emote.emoji{font-size:40px;line-height:1;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5))}
+.emote.phrase{background:var(--paper);color:var(--paper-ink);font-family:var(--f-display);font-size:16px;padding:6px 12px;border-radius:14px;border:3px solid var(--mustard);box-shadow:0 6px 14px rgba(0,0,0,.5)}
+.emote.phrase::after{content:"";position:absolute;left:50%;bottom:-9px;width:12px;height:12px;background:var(--paper);border-right:3px solid var(--mustard);border-bottom:3px solid var(--mustard);transform:translateX(-50%) rotate(45deg)}
+.emote.below{transform:translate(-50%,0)}
+.emote.phrase.below::after{bottom:auto;top:-9px;transform:translateX(-50%) rotate(225deg)}
+.pausebar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 12px);z-index:35;width:min(520px,calc(100% - 24px));
+  display:flex;align-items:center;gap:10px;background:var(--felt-2);border:1px solid var(--mustard);border-radius:12px;padding:8px 10px 8px 14px;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.pausebar span{flex:1;min-width:0}
+.emogrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.emogrid button{min-height:48px;padding:4px;font-size:13px;line-height:1.2}
+.emogrid button.em{font-size:26px}
+@media (prefers-reduced-motion:reduce){ .mc.new{animation:none;box-shadow:0 0 0 2px var(--mustard)} }
 </style>
 
 </head>
@@ -308,7 +351,7 @@ function cardHTML(k, flip){
 
 // ---------- app state ----------
 const ui = {
-  mode:null, fb:null, dbReady:false, inviteCode:"", copied:false,
+  mode:null, fb:null, dbReady:false, presence:null, mySeat:null, inviteCode:"", copied:false,
   code: store.get("kp.room") || "", room:null, seats:[], unsubs:[],
   local:null, sel:{card:null,to:null,claim:null,step:null,key:""},
   busy:false, error:"", sheet:null,
@@ -337,14 +380,78 @@ function seatList(v){
   return v && v.seats ? Object.entries(v.seats).map(([id,s])=>({id,name:s.name,joined:s.joined||0})).sort((a,b)=>a.joined-b.joined) : [];
 }
 function subscribe(code){
-  unsubscribeAll();
+  unsubscribeAll(code); resetEmotes();
   ui.code=code; store.set("kp.room",code);
   const f=FB();
   ui.unsubs.push(f.onValue(f.ref(f.db, roomPath(code)), snap=>{
-    const v=snap.val(); ui.room=decodeRoom(v); ui.seats=seatList(v); render();
+    const v=snap.val(); ui.room=decodeRoom(v); ui.seats=seatList(v); touch(); render(); handleEmotes(v && v.emotes);
   }, e=>setError(friendly(e))));
+  armPresence(code);
 }
-function unsubscribeAll(){ ui.unsubs.forEach(u=>u()); ui.unsubs=[]; ui.room=null; ui.seats=[]; }
+function remoteSendEmote(id, n){ const f=FB(); return f.set(f.ref(f.db, roomPath(ui.code)+"/emotes/"+MY_ID), {s:id, n}); }
+
+
+// ---------- connection budget ----------
+// Firebase's free plan allows 100 simultaneous connections, and every open page counts as one.
+// So a page is only connected while it is in a room and actually in use:
+//  - home screen: offline (it connects just long enough to create or join a room)
+//  - leaving a room: offline
+//  - app in the background / screen off for 1 minute: offline, reconnects when shown again
+//  - 30 minutes with no activity in the room: paused until the viewer taps
+// Going offline lets the server run the onDisconnect removals; reconnecting restores the seat (see presence).
+const NET = { hiddenMs: 60*1000, idleMs: 30*60*1000 };
+const net = { online:true, hiddenTimer:null, lastActive:Date.now(), paused:false };
+function netOn(){ const f=FB(); if(!f || !f.goOnline || net.online) return; f.goOnline(f.db); net.online=true; }
+function netOff(){ const f=FB(); if(!f || !f.goOffline || !net.online) return; f.goOffline(f.db); net.online=false; }
+function inRoom(){ return ui.mode==="remote" && !!ui.code; }
+function touch(){ net.lastActive=Date.now(); }
+function resumeNet(){ net.paused=false; touch(); if(inRoom()) netOn(); render(); }
+function netCheck(){
+  if(inRoom() && net.online && !net.paused && Date.now()-net.lastActive > NET.idleMs){ net.paused=true; netOff(); render(); }
+}
+document.addEventListener("visibilitychange", ()=>{
+  clearTimeout(net.hiddenTimer);
+  if(document.visibilityState==="hidden"){
+    if(inRoom()) net.hiddenTimer=setTimeout(()=>{ if(document.visibilityState==="hidden") netOff(); }, NET.hiddenMs);
+  } else {
+    touch();
+    if(inRoom() && !net.paused) netOn();
+  }
+});
+["pointerdown","keydown"].forEach(t=>document.addEventListener(t, touch, {passive:true}));
+setInterval(netCheck, 30*1000);
+
+// ---------- presence: clean up my seat and stamp when this phone drops off ----------
+// The server runs the queued removals when the connection is lost (tab closed, phone asleep, signal gone).
+// When the connection comes back, the seat is written again so a sleeping phone does not lose its place.
+function presenceRefs(code){
+  const f=FB();
+  return { seat: f.ref(f.db, roomPath(code)+"/seats/"+MY_ID), emote: f.ref(f.db, roomPath(code)+"/emotes/"+MY_ID) };
+}
+function armPresence(code){
+  const f=FB(); if(!f || !f.onDisconnect) return;
+  const refs=presenceRefs(code);
+  ui.presence={code, refs};
+  ui.unsubs.push(f.onValue(f.ref(f.db, ".info/connected"), async snap=>{
+    if(snap.val()!==true) return;
+    if(!ui.presence || ui.presence.code!==code || ui.code!==code) return;
+    try{
+      await f.onDisconnect(refs.seat).remove();
+      await f.onDisconnect(refs.emote).remove();
+      if(ui.mySeat && ui.presence && ui.presence.code===code) await f.set(refs.seat, ui.mySeat);
+    }catch(e){ console.warn("presence", e); }
+  }));
+}
+function disarmPresence(){
+  const p=ui.presence, f=FB(); ui.presence=null;
+  if(!p || !f || !f.onDisconnect) return Promise.resolve();
+  return Promise.all([f.onDisconnect(p.refs.seat).cancel(), f.onDisconnect(p.refs.emote).cancel()]).catch(e=>console.warn("presence", e));
+}
+// nextCode: the room we are about to (re)subscribe to; presence for that same room is kept.
+function unsubscribeAll(nextCode){
+  if(ui.presence && ui.presence.code!==nextCode) disarmPresence();
+  ui.unsubs.forEach(u=>u()); ui.unsubs=[]; ui.room=null; ui.seats=[];
+}
 function friendly(e){
   const c = e && (e.code||"") + " " + (e.message||"");
   if(/permission/i.test(c)) return "サーバーに書き込めませんでした。設置した人がFirebaseのルール設定を確認してください。";
@@ -364,35 +471,48 @@ async function txRoom(code, fn){
 }
 async function createRoom(){
   const name=ui.name.trim(); if(!name) return setError("名前を入れてください");
-  ui.busy=true; render();
+  ui.busy=true; render(); netOn();
   try{
     const f=FB(); let code=null;
     for(let i=0;i<8;i++){ const c=rid(4).toUpperCase(); const s=await f.get(f.ref(f.db, roomPath(c))); if(!s.exists()){ code=c; break; } }
     if(!code) throw new Error("ルームを作れませんでした。もう一度試してください。");
-    await f.set(f.ref(f.db, roomPath(code)), {code,host:MY_ID,status:"lobby",rev:0,created:Date.now(),seats:{[MY_ID]:{name,joined:Date.now()}}});
+    ui.mySeat={name, joined:Date.now()};
+    await f.set(f.ref(f.db, roomPath(code)), {code,host:MY_ID,status:"lobby",rev:0,created:Date.now(),seats:{[MY_ID]:ui.mySeat}});
     ui.mode="remote"; subscribe(code); ui.error="";
   }catch(e){ ui.error=friendly(e); }
+  if(!inRoom()) netOff();
   ui.busy=false; render();
 }
 async function joinRoom(code){
   const name=ui.name.trim(); if(!name) return setError("名前を入れてください");
   code=(code||"").trim().toUpperCase(); if(!/^[A-Z0-9]{4}$/.test(code)) return setError("4文字のルームコードを入れてください");
-  ui.busy=true; render();
+  ui.busy=true; render(); netOn();
   try{
     const f=FB();
     const s=await f.get(f.ref(f.db, roomPath(code)));
     if(!s.exists()) ui.error="そのルームは見つかりません。コードを確かめてください。";
     else{
       const prev = (s.val().seats||{})[MY_ID];
-      await f.set(f.ref(f.db, roomPath(code)+"/seats/"+MY_ID), {name, joined: prev ? prev.joined : Date.now()});
+      if(ui.code && ui.code!==code) await leaveRoomData();
+      ui.mySeat={name, joined: prev ? prev.joined : Date.now()};
+      await f.set(f.ref(f.db, roomPath(code)+"/seats/"+MY_ID), ui.mySeat);
       ui.mode="remote"; subscribe(code); ui.error="";
     }
   }catch(e){ ui.error=friendly(e); }
+  if(!inRoom()) netOff();
   ui.busy=false; render();
 }
+// Explicit exit: cancel the queued disconnect removals first, then remove my seat and stamp myself.
+async function leaveRoomData(){
+  const code=ui.code; if(!code) return;
+  await disarmPresence();
+  try{ const r=presenceRefs(code), f=FB(); await f.remove(r.seat); await f.remove(r.emote); }catch(e){}
+}
 async function leaveRoom(){
-  try{ if(ui.room && ui.room.status==="lobby"){ const f=FB(); await f.remove(f.ref(f.db, roomPath(ui.code)+"/seats/"+MY_ID)); } }catch(e){}
+  await leaveRoomData();
+  ui.mySeat=null;
   unsubscribeAll(); ui.mode=null; ui.code=""; store.del("kp.room");
+  net.paused=false; netOff();
   try{ history.replaceState(null,"",location.pathname); }catch(e){}
   render();
 }
@@ -455,7 +575,8 @@ const act = a => ui.mode==="remote" ? remoteAct(a) : localAct(a);
 function render(){
   document.documentElement.classList.toggle("play", !!isPlaying());
   const active=document.activeElement && document.activeElement.id;
-  $("#app").innerHTML = view() + sheetHTML() + (ui.error && isPlaying() ? `<div class="toast" role="alert">${esc(ui.error)}</div>` : "");
+  $("#app").innerHTML = view() + sheetHTML() + (ui.error && isPlaying() ? `<div class="toast" role="alert">${esc(ui.error)}</div>` : "")
+    + (typeof net!=="undefined" && net.paused && inRoom() ? `<div class="pausebar" role="status"><span>しばらく動きがなかったので通信を休止しています</span><button class="primary sm" data-a="resumenet">再開</button></div>` : "");
   if(active){ const el=document.getElementById(active); if(el && el.tagName==="INPUT"){ el.focus(); try{ el.setSelectionRange(el.value.length,el.value.length);}catch(e){} } }
 }
 function view(){
@@ -517,136 +638,166 @@ function lobbyView(){
 
 const nameOf = (g,id) => { const p=playerOf(g,id); return p?p.name:"?"; };
 
-function barHTML(remote, g){
-  const pile = g && g.twoPlayer ? `<span class="tag s" style="font-size:11px;line-height:20px;padding:0 8px" title="ダミーの山札">山札 ${(g.dummy||[]).length}</span>` : "";
-  return `<div class="bar"><div class="ttl">ゴキブリポーカー${remote?`<span>${esc(ui.room.code)}</span>`:""}</div>${pile}
-    <button class="ghost sm" data-a="sheet" data-v="log">流れ</button>
-    <button class="ghost sm" data-a="sheet" data-v="rules">ルール</button>
-    ${remote?"":`<button class="ghost sm" data-a="home">終了</button>`}</div>`;
-}
+// ---------- table view ----------
+// Seat centers (% of the felt) for opponents, clockwise from the player after you. You sit at the bottom.
+const SEATS = {
+  1:[[50,13]],
+  2:[[22,19],[78,19]],
+  3:[[17,40],[50,12],[83,40]],
+  4:[[16,50],[30,13],[70,13],[84,50]],
+  5:[[16,62],[16,26],[50,11],[84,26],[84,62]]
+};
+const SEAT_COLORS = ["#e2a53b","#7fb2dd","#e0826f","#93c58a","#bd9ae0","#e79ac0"];
+const BOTTOM = [50,88];
 
-function oppsHTML(g, me){
-  const n=g.players.length, cols = n<=3 ? n : n===4 ? 2 : 3;
-  const actor=currentActor(g), pd=g.pending;
-  return `<div class="opps" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${g.players.map(p=>{
-    const tags=[];
-    if(g.phase==="propose" && g.parent===p.id) tags.push('<span class="tag p">親</span>');
-    if(pd && pd.holder===p.id) tags.push('<span class="tag h">手番</span>');
-    else if(pd && pd.seen.includes(p.id)) tags.push('<span class="tag s">見た</span>');
-    const ks=KINDS.filter(k=>countKind(p.open,k)>0).sort((a,b)=>countKind(p.open,b)-countKind(p.open,a));
-    const opens = ks.length ? ks.map(k=>{const c=countKind(p.open,k);return `<span class="${c>=3?"c3":c===2?"c2":""}" title="${kname(k)} ${c}枚">${glyph(k)}${c}</span>`;}).join("") : `<span class="dim">―</span>`;
-    return `<div class="opp ${p.id===me?"me":""} ${actor===p.id?"act":""} ${g.loser===p.id?"lost":""}">
-      <div class="nm"><b>${esc(p.name)}</b>${p.id===me?'<span class="tag s">自分</span>':""}${tags.join("")}</div>
-      <div class="meta">手札${p.hand.length}・場${p.open.length}</div>
-      <div class="opens">${opens}</div></div>`;
-  }).join("")}</div>`;
+function seatLayout(g, bottomId){
+  const ids=g.players.map(p=>p.id);
+  let i=ids.indexOf(bottomId); if(i<0) i=0;
+  const order=ids.slice(i).concat(ids.slice(0,i));
+  const pos={[order[0]]:BOTTOM};
+  (SEATS[order.length-1]||[]).forEach((xy,j)=>{ pos[order[j+1]]=xy; });
+  return {order,pos};
 }
-
-function revealTable(g){
+function tableCard(k){
+  if(!k) return `<div class="tc back" aria-label="裏向きのカード"></div>`;
+  return `<div class="tc k-${k}"><span class="g" aria-hidden="true">${glyph(k)}</span><span class="n">${kname(k)}</span></div>`;
+}
+function miniCards(list, hl){
+  const ks=KINDS.filter(k=>countKind(list,k)>0).sort((a,b)=>countKind(list,b)-countKind(list,a));
+  if(!ks.length) return `<span class="none">場札なし</span>`;
+  return ks.map(k=>{ const c=countKind(list,k);
+    return `<span class="mc k-${k} ${c>=3?"danger":""} ${hl&&hl.includes(k)?"new":""}" title="${kname(k)} ${c}枚" aria-label="${kname(k)} ${c}枚"><i aria-hidden="true">${glyph(k)}</i><b>${c}</b></span>`;
+  }).join("");
+}
+function seatHTML(g, p, xy, isBottom, selectable, me){
+  const color=SEAT_COLORS[g.players.findIndex(x=>x.id===p.id)%SEAT_COLORS.length];
+  const pd=g.pending, tags=[];
+  if(g.phase==="propose" && g.parent===p.id) tags.push('<span class="tag p">親</span>');
+  if(pd && pd.holder===p.id) tags.push('<span class="tag h">手番</span>');
+  else if(pd && pd.seen.includes(p.id)) tags.push('<span class="tag s">見た</span>');
+  if(g.loser===p.id) tags.push('<span class="tag" style="background:var(--lie);color:#fff">負け</span>');
+  const hl = g.last && g.last.loser===p.id && (g.phase==="over" || g.last.turn===g.turn-1) ? [g.last.card,g.last.drawn].filter(Boolean) : null;
+  const el = selectable ? "button" : "div";
+  const cls = `seat ${isBottom?"bottom":""} ${selectable?"selectable":""} ${currentActor(g)===p.id?"active":""} ${g.loser===p.id?"lost":""}`;
+  const topRow = !isBottom && xy[1] <= 20;
+  const style = isBottom ? "" : topRow ? ` style="left:${xy[0]}%;top:6px;transform:translateX(-50%)"` : ` style="left:${xy[0]}%;top:${xy[1]}%"`;
+  const attrs = selectable ? ` data-a="to" data-v="${esc(p.id)}" aria-label="${esc(p.name)}に渡す"` : "";
+  return `<${el} class="${cls}"${style} data-seat="${esc(p.id)}"${attrs}>
+    <div class="plate"><span class="av" style="--sc:${color}">${esc(p.name.slice(0,1))}</span><span class="pn">${esc(p.name)}</span>${isBottom?"":`<span class="hc2" aria-label="手札${p.hand.length}枚"><span class="bk"></span>${p.hand.length}</span>`}${tags.join("")}</div>
+    <div class="mcs">${miniCards(p.open,hl)}</div>
+  </${el}>`;
+}
+function revealHTML(g){
   const L=g.last, truth=L.card===L.claim;
-  return `<div class="table">${cardHTML(L.card,true)}<div class="txt">
-    <div class="k1">${esc(nameOf(g,L.caller))}は「${L.guess==="true"?"本当":"ウソ"}」と答えた</div>
-    <div class="k2">「${kname(L.claim)}」は <span class="stamp ${truth?"t":"l"}">${truth?"本当":"ウソ"}</span></div>
-    <div class="k3">${L.correct?"見破り成功":"見破り失敗"}　→ <b style="color:var(--ink)">${esc(nameOf(g,L.loser))}</b>が引き取り${L.drawn?`。山札から${glyph(L.drawn)}${kname(L.drawn)}も追加`:""}</div></div></div>`;
+  return `<div class="reveal" data-key="r${L.turn}">${tableCard(L.card)}<div class="rt">
+    <div>${esc(nameOf(g,L.caller))}「${L.guess==="true"?"本当":"ウソ"}」</div>
+    <div class="big">${kname(L.claim)}は <span class="stamp ${truth?"t":"l"}">${truth?"本当":"ウソ"}</span></div>
+    <div><b>${esc(nameOf(g,L.loser))}</b>が引き取り${L.drawn?`<br>山札から${glyph(L.drawn)}${kname(L.drawn)}も`:""}</div></div></div>`;
+}
+const hint = (text, back) => `<div class="hint"><span>${text}</span>${back?`<button class="ghost sm" data-a="back" data-v="${back}">戻る</button>`:""}</div>`;
+
+function feltHTML(g, bottomId, me, st){
+  const {order,pos}=seatLayout(g,bottomId);
+  const seats=order.map((id,i)=>seatHTML(g, playerOf(g,id), pos[id], i===0, !!(st.targets && st.targets.includes(id)), me)).join("");
+  let fly="";
+  const pd=g.pending;
+  if(pd && g.phase==="decide"){
+    const hp=pos[pd.holder]||[50,50], t=.32;
+    const x=50+(hp[0]-50)*t, y=47+(hp[1]-47)*t;
+    fly=`<div class="fly" style="left:${x}%;top:${y}%" data-key="${g.turn}-${pd.chain.length}" data-from="${esc(pd.from)}">
+      ${tableCard(st.showFace?pd.card:null)}<div class="bubble"><b>${esc(nameOf(g,pd.from))}</b><span>「${glyph(pd.claim)}${kname(pd.claim)}です」</span></div></div>`;
+  }
+  const pile = g.twoPlayer ? `<div class="pile" aria-label="ダミーの山札 ${(g.dummy||[]).length}枚"><div class="stack"><span></span><span></span><span></span></div>山札 ${(g.dummy||[]).length}</div>` : "";
+  const emo = `<button class="emobtn" data-a="sheet" data-v="emote" aria-label="スタンプを送る">😏</button>`;
+  return `<div class="felt">${seats}${pile}${st.center?`<div class="center">${st.center}</div>`:""}${fly}${emo}</div>`;
 }
 
-function tableHTML(g, me){
-  if(g.phase==="over"){
-    const why = g.reason==="four" ? `${glyph(g.loseKind)} ${kname(g.loseKind)}が4枚そろいました` : g.reason==="dummy" ? "引くはずのダミーの山札がなくなりました" : "親の番に手札がありませんでした";
-    return `<div class="table col">${g.last?cardHTML(g.last.card,true):""}<div class="txt"><div class="label">GAME OVER</div>
-      <div class="over-t">${esc(nameOf(g,g.loser))}の負け</div><div class="k3">${why}。ほかの全員の勝ちです。</div></div></div>`;
-  }
-  if(g.phase==="decide"){
-    const pd=g.pending, mine = me===pd.holder && pd.peeked;
-    const chain = pd.chain.map(c=>esc(nameOf(g,c.from))).concat(esc(nameOf(g,pd.holder))).join("→");
-    return `<div class="table">${cardHTML(mine?pd.card:null, mine)}<div class="txt">
-      <div class="k1">${esc(nameOf(g,pd.from))} → ${esc(nameOf(g,pd.holder))}</div>
-      <div class="k2">「これは${glyph(pd.claim)}${kname(pd.claim)}です」</div>
-      <div class="k3">${mine?`中身は<b style="color:var(--ink)">${kname(pd.card)}</b>（あなただけに表示）`:`回った順：${chain}`}</div></div></div>`;
-  }
-  if(g.last && g.last.turn===g.turn-1) return revealTable(g);
-  return `<div class="table col"><div class="txt"><div class="k1">${g.turn}ターン目</div><div class="k2">${esc(nameOf(g,g.parent))}が親です</div><div class="k3">手札から1枚、誰かに渡します</div></div></div>`;
-}
-
-// selection reset per decision point
 function syncSel(g){
   const key = g.turn+"|"+g.phase+"|"+(g.pending?g.pending.holder+"|"+g.pending.peeked:"");
-  if(ui.sel.key!==key){
-    ui.sel={card:null,to:null,claim:null,key,
-      step: g.phase==="propose" ? "card" : "to"};
-  }
+  if(ui.sel.key!==key) ui.sel={card:null,to:null,claim:null,key,step: g.phase==="propose"?"card":"to"};
+}
+function claimPanel(q, act, verb){
+  const s=ui.sel;
+  return `<div class="action"><div class="q"><span>${q}</span><button class="ghost sm" data-a="back" data-v="to">戻る</button></div>
+    <div class="claims">${KINDS.map(k=>`<button data-a="claim" data-v="${k}" aria-pressed="${s.claim===k}"><span class="g" aria-hidden="true">${glyph(k)}</span>${SHORT[k]}</button>`).join("")}</div>
+    <button class="primary" data-a="${act}" ${s.claim&&!ui.busy?"":"disabled"}>${s.claim?`「${kname(s.claim)}です」と言って${verb}`:"宣言する動物を選ぶ"}</button></div>`;
 }
 
-function stepsHTML(list, cur){
-  const idx=list.findIndex(s=>s[0]===cur);
-  return `<div class="steps">${list.map((s,i)=>`<i class="${i===idx?"on":i<idx?"done":""}">${i+1} ${s[1]}</i>`).join("")}</div>`;
-}
-function claimGrid(){
-  return `<div class="claims">${KINDS.map(k=>`<button data-a="claim" data-v="${k}" aria-pressed="${ui.sel.claim===k}"><span class="g" aria-hidden="true">${glyph(k)}</span>${SHORT[k]}</button>`).join("")}</div>`;
-}
-function targetGrid(g, ids){
-  return `<div class="targets">${ids.map(id=>`<button data-a="to" data-v="${esc(id)}">${esc(nameOf(g,id))}</button>`).join("")}</div>`;
-}
-
-function actHTML(g, me, remote){
+// What the table, the action strip and the hand show for this viewer right now.
+function turnUI(g, me, remote){
+  const o={targets:null, center:"", action:"", showFace:false, hideHand:false};
+  const fresh = g.last && g.last.turn===g.turn-1;
   if(g.phase==="over"){
+    const why = g.reason==="four" ? `${glyph(g.loseKind)}${kname(g.loseKind)}が4枚そろいました` : g.reason==="dummy" ? "引くはずのダミーの山札がなくなりました" : "親の番に手札がありませんでした";
+    o.center = (g.last?revealHTML(g):"") + `<div class="hint" style="flex-direction:column;gap:2px"><div class="over-t">${esc(nameOf(g,g.loser))}の負け</div><div style="font-weight:500">${why}</div></div>`;
     const isHost = remote ? hostIsMe() : true;
-    if(!isHost) return `<div class="act"><p class="notice">ホストが次のゲームを始めるのを待っています</p></div>`;
-    return `<div class="act"><div class="row"><button class="primary grow" data-a="${remote?"rematch":"relocal"}">同じメンバーでもう一度</button><button class="ghost" data-a="${remote?"lobby":"home"}">${remote?"ロビーへ":"メニューへ"}</button></div></div>`;
+    o.action = isHost
+      ? `<div class="action"><div class="row"><button class="primary grow" data-a="${remote?"rematch":"relocal"}">同じメンバーでもう一度</button><button class="ghost" data-a="${remote?"lobby":"home"}">${remote?"ロビーへ":"メニューへ"}</button></div></div>`
+      : `<div class="action"><p class="notice">ホストが次のゲームを始めるのを待っています</p></div>`;
+    return o;
   }
-  const actor=currentActor(g);
+  const actor=currentActor(g), pd=g.pending;
+  if(g.phase==="propose" && fresh) o.center = revealHTML(g);
   if(actor!==me){
-    return `<div class="act"><p class="notice">${esc(nameOf(g,actor))}が${g.phase==="propose"?"渡すカードを選んでいます":"考えています"}…</p></div>`;
+    o.center += `<div class="hint wait">${esc(nameOf(g,actor))}が${g.phase==="propose"?"渡すカードを選んでいます":"考えています"}…</div>`;
+    return o;
   }
-  syncSel(g);
-  const s=ui.sel, busy=ui.busy?"disabled":"";
+  syncSel(g); const s=ui.sel;
   if(g.phase==="propose"){
-    const others=g.players.filter(x=>x.id!==me).map(x=>x.id);
-    const steps=stepsHTML([["card","カード"],["to","相手"],["claim","宣言"]], s.step);
-    if(s.step==="card") return `<div class="act">${steps}<div class="q"><span>下の手札から、渡すカードをタップ</span></div></div>`;
-    if(s.step==="to") return `<div class="act">${steps}<div class="q"><span>${glyph(s.card)}${kname(s.card)}を誰に渡す？</span><button class="ghost sm" data-a="back" data-v="card">戻る</button></div>${targetGrid(g,others)}</div>`;
-    return `<div class="act">${steps}<div class="q"><span>${esc(nameOf(g,s.to))}に何と言う？（中身：${kname(s.card)}）</span><button class="ghost sm" data-a="back" data-v="to">戻る</button></div>${claimGrid()}
-      <button class="primary" data-a="propose" ${s.claim&&!ui.busy?"":"disabled"}>${s.claim?`「${kname(s.claim)}です」と言って渡す`:"宣言する動物を選ぶ"}</button></div>`;
+    if(s.step==="card") o.center += hint("手札から渡すカードを選んでください");
+    else if(s.step==="to"){ o.targets=g.players.filter(x=>x.id!==me).map(x=>x.id); o.center = hint(`${glyph(s.card)}${kname(s.card)}を誰に渡す？<br>相手の席をタップ`, "card"); }
+    else { o.action = claimPanel(`${esc(nameOf(g,s.to))}に何と言う？（中身：${kname(s.card)}）`, "propose", "渡す"); o.hideHand=true; }
+    return o;
   }
-  const pd=g.pending;
   if(!pd.peeked){
-    const pass=canPass(g);
-    return `<div class="act"><div class="q"><span>${esc(nameOf(g,pd.from))}の宣言は本当？ウソ？</span></div>
-      <div class="row"><button class="truth grow" data-a="call" data-v="true" ${busy}>本当だ</button><button class="lie grow" data-a="call" data-v="false" ${busy}>ウソだ</button></div>
-      ${pass?`<button data-a="peek" ${busy}>こっそり見て、ほかの人に回す</button>`:`<p class="notice">全員がこのカードを見たので、回せません。見破ってください。</p>`}</div>`;
+    const pass=canPass(g), busy=ui.busy?"disabled":"";
+    o.action = `<div class="action"><div class="q"><span>${esc(nameOf(g,pd.from))}の「${kname(pd.claim)}」は本当？ウソ？</span></div>
+      <div class="row"><button class="truth grow" data-a="call" data-v="true" ${busy}>本当だ</button><button class="lie grow" data-a="call" data-v="false" ${busy}>ウソだ</button>
+      ${pass?`<button class="grow" data-a="peek" ${busy}>見て回す</button>`:""}</div>
+      ${pass?"":`<p class="notice" style="padding:4px 10px">回せる相手がいないので、見破ってください</p>`}</div>`;
+    return o;
   }
-  const steps=stepsHTML([["to","相手"],["claim","宣言"]], s.step);
-  if(s.step==="to") return `<div class="act">${steps}<div class="q"><span>まだ見ていない人に回す</span></div>${targetGrid(g,passTargets(g))}</div>`;
-  return `<div class="act">${steps}<div class="q"><span>${esc(nameOf(g,s.to))}に何と言う？</span><button class="ghost sm" data-a="back" data-v="to">戻る</button></div>${claimGrid()}
-    <button class="primary" data-a="pass" ${s.claim&&!ui.busy?"":"disabled"}>${s.claim?`「${kname(s.claim)}です」と言って回す`:"宣言する動物を選ぶ"}</button></div>`;
+  o.showFace=true;
+  if(s.step==="to"){ o.targets=passTargets(g); o.center=hint(`中身は${glyph(pd.card)}${kname(pd.card)}。<br>まだ見ていない人の席をタップ`); }
+  else { o.action = claimPanel(`${esc(nameOf(g,s.to))}に何と言って回す？`, "pass", "回す"); o.hideHand=true; }
+  return o;
 }
 
 function handHTML(g, me){
   const p = me && playerOf(g,me);
-  if(!p) return `<div class="handbar" style="grid-template-columns:1fr"><span class="dim" style="font-size:13px;text-align:center;padding:10px">観戦中</span></div>`;
+  if(!p) return "";
   const pick = g.phase==="propose" && currentActor(g)===me;
-  return `<div class="handbar" aria-label="あなたの手札 ${p.hand.length}枚">${KINDS.map(k=>{
-    const c=countKind(p.hand,k);
-    const inner=`<span class="g" aria-hidden="true">${glyph(k)}</span><span class="n">${SHORT[k]}</span>${c?`<span class="cnt">${c}</span>`:""}`;
-    return pick && c ? `<button class="hc k-${k}" data-a="card" data-v="${k}" aria-pressed="${ui.sel.card===k}" aria-label="${kname(k)} ${c}枚">${inner}</button>`
-                     : `<div class="hc k-${k} ${c?"":"zero"}" aria-label="${kname(k)} ${c}枚">${inner}</div>`;
+  const ks=KINDS.filter(k=>countKind(p.hand,k)>0);
+  if(!ks.length) return `<div class="hand empty">手札がありません。次に親になると負けです</div>`;
+  const mid=(ks.length-1)/2;
+  return `<div class="hand" style="--n:${ks.length}"><span class="hlabel">手札 ${p.hand.length}枚</span>${ks.map((k,i)=>{
+    const c=countKind(p.hand,k), st=`style="--r:${((i-mid)*2.6).toFixed(1)}deg;--dy:${(-(mid*mid-(i-mid)**2)*1.1).toFixed(1)}px"`;
+    const inner=`<span class="g" aria-hidden="true">${glyph(k)}</span><span class="n">${SHORT[k]}</span><span class="cnt">${c}</span>`;
+    return pick ? `<button class="hcard k-${k}" ${st} data-a="card" data-v="${k}" aria-pressed="${ui.sel.card===k}" aria-label="${kname(k)} ${c}枚">${inner}</button>`
+                : `<div class="hcard k-${k}" ${st} aria-label="${kname(k)} ${c}枚">${inner}</div>`;
   }).join("")}</div>`;
 }
 
+function hudHTML(remote, g){
+  return `<div class="hud"><span class="room">${remote?`ROOM <b>${esc(ui.room.code)}</b>`:"1台モード"}</span><span class="chip">${g.turn}巡目</span>
+    <span class="sp"></span><button class="ghost sm" data-a="sheet" data-v="log">流れ</button><button class="ghost sm" data-a="sheet" data-v="rules">ルール</button>
+    ${remote?"":`<button class="ghost sm" data-a="home">終了</button>`}</div>`;
+}
+
 function gameView(g, me, remote){
-  const claiming = g.phase!=="over" && currentActor(g)===me && ui.sel.step==="claim" && (g.phase==="propose" || (g.pending && g.pending.peeked));
-  return `<div class="game ${claiming?"claiming":""}">${barHTML(remote,g)}${oppsHTML(g,me)}${tableHTML(g,me)}${actHTML(g,me,remote)}${handHTML(g,me)}</div>`;
+  const st=turnUI(g, me, remote);
+  const bottom = me && playerOf(g,me) ? me : (currentActor(g) || g.players[0].id);
+  return `<div class="game">${hudHTML(remote,g)}${feltHTML(g,bottom,me,st)}${st.action}${st.hideHand?"":handHTML(g,me)}</div>`;
 }
 
 function localView(){
   const g=ui.local.game, actor=currentActor(g);
   if(g.phase!=="over" && ui.local.confirmed!==actor){
     const nm=esc(nameOf(g,actor));
-    const top = g.last && g.last.turn===g.turn-1 && g.phase==="propose" ? revealTable(g)
-      : `<div class="table col"><div class="txt"><div class="k1">次の手番</div><div class="k2">${nm}さんに<br>スマホを渡してください</div><div class="k3">${g.phase==="propose"?"親としてカードを出します":"カードが回ってきました"}</div></div></div>`;
-    return `<div class="game">${barHTML(false,g)}${oppsHTML(g,null)}${top}
-      <div class="act"><div class="q"><span>${nm}さん以外は画面を見ないでください</span></div><button class="primary" data-a="confirm">${nm}です。手札を見る</button></div>
-      <div class="handbar" style="grid-template-columns:1fr"><span class="dim" style="font-size:13px;text-align:center;padding:10px">手札は隠れています</span></div></div>`;
+    const center = (g.phase==="propose" && g.last && g.last.turn===g.turn-1 ? revealHTML(g) : "")
+      + `<div class="hint" style="flex-direction:column;gap:2px"><span style="font-weight:500;font-size:12px">次の手番</span><span style="font-size:16px">${nm}さんにスマホを渡してください</span></div>`;
+    return `<div class="game">${hudHTML(false,g)}${feltHTML(g,actor,null,{center})}
+      <div class="action"><div class="q"><span>${nm}さん以外は画面を見ないでください</span></div><button class="primary" data-a="confirm">${nm}です。手札を見る</button></div></div>`;
   }
   return gameView(g, g.phase==="over"?null:actor, false);
 }
@@ -656,6 +807,8 @@ function sheetHTML(){
   const g = ui.mode==="local" ? ui.local.game : ui.room.game;
   let body;
   if(ui.sheet==="rules") body=`<h3 style="font-size:17px">ルール</h3>${RULES}`;
+  else if(ui.sheet==="emote") body=`<h3 style="font-size:17px">スタンプ・ひとこと</h3>
+    <div class="emogrid">${Object.entries(EMOTES).map(([id,t])=>`<button class="${id[0]==="e"?"em":""}" data-a="emote" data-v="${id}">${t}</button>`).join("")}</div>`;
   else{
     const lines=g.log.slice().reverse().map(e=> e.t==="give"
       ? `${esc(nameOf(g,e.from))} → ${esc(nameOf(g,e.to))}「${kname(e.claim)}」`
@@ -663,6 +816,85 @@ function sheetHTML(){
     body=`<h3 style="font-size:17px">これまでの流れ</h3><div class="log">${lines.length?lines.map(l=>`<div>${l}</div>`).join(""):"まだ何も起きていません"}</div>`;
   }
   return `<div class="sheet" data-a="closesheet"><div class="in" data-stop="1">${body}<button data-a="closesheet">閉じる</button></div></div>`;
+}
+
+// Slide the passed card from the giver's seat, and flip/stamp a fresh reveal — once per event.
+const anim={fly:null, reveal:null};
+function afterRender(){
+  if(!isPlaying()) return;
+  const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const fly=document.querySelector(".fly");
+  if(fly && anim.fly!==fly.dataset.key){
+    anim.fly=fly.dataset.key;
+    const from=document.querySelector(`[data-seat="${CSS.escape(fly.dataset.from)}"] .plate`);
+    if(from && !reduce && fly.animate){
+      const a=from.getBoundingClientRect(), b=fly.getBoundingClientRect();
+      const dx=(a.left+a.width/2)-(b.left+b.width/2), dy=(a.top+a.height/2)-(b.top+b.height/2);
+      fly.animate([{transform:`translate(-50%,-50%) translate(${dx}px,${dy}px) scale(.45) rotate(-14deg)`,opacity:.5},{transform:"translate(-50%,-50%)",opacity:1}],{duration:560,easing:"cubic-bezier(.2,.8,.2,1)"});
+    }
+  }
+  const rv=document.querySelector(".reveal[data-key]");
+  if(rv && anim.reveal!==rv.dataset.key){
+    anim.reveal=rv.dataset.key;
+    if(!reduce && rv.animate){
+      const c=rv.querySelector(".tc"); if(c) c.animate([{transform:"rotateY(90deg) scale(.8)"},{transform:"none"}],{duration:420,easing:"ease-out"});
+      const s=rv.querySelector(".stamp"); if(s) s.animate([{transform:"scale(2.4) rotate(-16deg)",opacity:0},{transform:"rotate(-4deg)",opacity:1}],{duration:360,delay:320,easing:"cubic-bezier(.3,1.6,.5,1)",fill:"backwards"});
+    }
+  }
+}
+{ const base=render; render=function(){ base(); try{ afterRender(); }catch(e){} }; }
+
+
+// ---------- stamps & taunts ----------
+const EMOTES = {
+  e1:"😂", e2:"😱", e3:"😏", e4:"🤔", e5:"🙏", e6:"👀", e7:"🔥", e8:"💀",
+  t1:"ダウト！", t2:"本当だってば", t3:"顔に出てるよ", t4:"信じてるよ？",
+  t5:"4枚目どうぞ", t6:"はやく〜", t7:"ナイス！", t8:"ドンマイ"
+};
+const emoteSeen = {};      // pid -> last nonce seen
+let emoteReady = false, lastEmoteAt = 0;
+function resetEmotes(){ for(const k in emoteSeen) delete emoteSeen[k]; emoteReady=false; }
+// map: {pid:{s,n}} — show only nonces that changed after the first snapshot
+function handleEmotes(map){
+  map = map || {};
+  for(const [pid,e] of Object.entries(map)){
+    if(!e || !EMOTES[e.s]) continue;
+    if(emoteReady && emoteSeen[pid]!==e.n) showEmote(pid, e.s);
+    emoteSeen[pid]=e.n;
+  }
+  emoteReady=true;
+}
+function sendEmote(id){
+  if(!EMOTES[id]) return;
+  const now=Date.now(); if(now-lastEmoteAt<1200) return; lastEmoteAt=now;
+  if(ui.mode==="local"){ const g=ui.local.game; showEmote(ui.local.confirmed || currentActor(g) || g.players[0].id, id); return; }
+  showEmote(MY_ID, id);
+  emoteSeen[MY_ID] = now+"-"+MY_ID;
+  remoteSendEmote(id, emoteSeen[MY_ID]).catch(()=>{});
+}
+function showEmote(pid, id){
+  const plate=document.querySelector(`[data-seat="${CSS.escape(pid)}"] .plate`);
+  if(!plate) return;
+  const r=plate.getBoundingClientRect(), txt=EMOTES[id], isEmoji=id[0]==="e";
+  const el=document.createElement("div");
+  const below = r.top < 110;   // seats along the top rim pop downward so the bubble stays on screen
+  el.className="emote "+(isEmoji?"emoji":"phrase")+(below?" below":"");
+  el.textContent=txt;
+  const x=Math.min(Math.max(r.left+r.width/2, 60), innerWidth-60);
+  el.style.left=x+"px"; el.style.top=(below ? r.bottom+10 : r.top-4)+"px";
+  const Y=below?"0%":"-100%", Y2=below?"20%":"-130%", Y3=below?"35%":"-150%";
+  document.body.appendChild(el);
+  const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if(el.animate && !reduce){
+    el.animate([
+      {transform:`translate(-50%,${Y}) scale(.3)`,opacity:0,offset:0},
+      {transform:`translate(-50%,${Y}) scale(1.18)`,opacity:1,offset:.12},
+      {transform:`translate(-50%,${Y}) scale(1)`,opacity:1,offset:.2},
+      {transform:`translate(-50%,${Y2}) scale(1)`,opacity:1,offset:.85},
+      {transform:`translate(-50%,${Y3}) scale(.9)`,opacity:0,offset:1}
+    ],{duration:2600,easing:"ease-out",fill:"forwards"});
+  }
+  setTimeout(()=>el.remove(), 2700);
 }
 
 // ---------- events ----------
@@ -675,6 +907,7 @@ document.addEventListener("keydown", e=>{ if(e.key==="Enter" && e.target.id==="j
 document.addEventListener("click", e=>{
   const b=e.target.closest("[data-a],[data-stop]"); if(!b || b.disabled || b.dataset.stop) return;
   const a=b.dataset.a, v=b.dataset.v, s=ui.sel;
+  if(net.paused && inRoom()){ resumeNet(); if(a==="resumenet") return; }
   switch(a){
     case "create": return createRoom();
     case "join": return joinRoom(($("#jc")||{}).value || ui.inviteCode);
@@ -690,6 +923,7 @@ document.addEventListener("click", e=>{
     case "confirm": ui.local.confirmed=currentActor(ui.local.game); return render();
     case "sheet": ui.sheet=v; return render();
     case "closesheet": ui.sheet=null; return render();
+    case "emote": ui.sheet=null; render(); return sendEmote(v);
     case "card": s.card=v; s.step = s.to ? "claim" : "to"; return render();
     case "to": s.to=v; s.step="claim"; return render();
     case "claim": s.claim=v; return render();
@@ -706,8 +940,21 @@ document.addEventListener("click", e=>{
 render();
 window.kpBackend = async (fb)=>{
   ui.fb=fb; ui.dbReady=true;
+  if(fb) netOff();   // stay disconnected on the home screen
   if(fb && ui.code && !ui.inviteCode){
-    try{ const s=await fb.get(fb.ref(fb.db, roomPath(ui.code))); if(s.exists() && (s.val().seats||{})[MY_ID]){ ui.mode="remote"; subscribe(ui.code); } else store.del("kp.room"); }catch(e){}
+    netOn();
+    try{
+      const s=await fb.get(fb.ref(fb.db, roomPath(ui.code)));
+      const v=s.exists()?s.val():null, room=decodeRoom(v);
+      const seat=v && (v.seats||{})[MY_ID];
+      const inGame=room && room.game && room.game.players.find(p=>p.id===MY_ID);
+      // A closed tab removes the seat on the server, so also resume when I am still a player in the running game.
+      if(seat || inGame){
+        ui.mySeat = seat ? {name:seat.name, joined:seat.joined||Date.now()} : {name:inGame.name, joined:Date.now()};
+        ui.mode="remote"; subscribe(ui.code);
+      } else store.del("kp.room");
+    }catch(e){}
+    if(!inRoom()) netOff();
   }
   render();
 };
@@ -721,7 +968,7 @@ else{
     const app = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-app.js`);
     const d = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-database.js`);
     const db = d.getDatabase(app.initializeApp(cfg));
-    window.kpBackend({db, ref:d.ref, get:d.get, set:d.set, remove:d.remove, onValue:d.onValue, runTransaction:d.runTransaction});
+    window.kpBackend({db, ref:d.ref, get:d.get, set:d.set, remove:d.remove, onValue:d.onValue, runTransaction:d.runTransaction, onDisconnect:d.onDisconnect, goOnline:d.goOnline, goOffline:d.goOffline});
   }catch(e){ console.error(e); window.kpBackend(null); }
 }
 </script>
