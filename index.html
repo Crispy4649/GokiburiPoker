@@ -404,8 +404,22 @@ const net = { online:true, hiddenTimer:null, lastActive:Date.now(), paused:false
 function netOn(){ const f=FB(); if(!f || !f.goOnline || net.online) return; f.goOnline(f.db); net.online=true; }
 function netOff(){ const f=FB(); if(!f || !f.goOffline || !net.online) return; f.goOffline(f.db); net.online=false; }
 function inRoom(){ return ui.mode==="remote" && !!ui.code; }
+// The free plan refuses connections past 100 at once. A refused (or offline) client never reaches
+// ".info/connected" = true, so give up after a few seconds with a clear message instead of hanging.
+const BUSY_MSG = "いま接続が混み合っているか、通信できません。少し待ってからもう一度試してください。";
+function waitConnected(ms=8000){
+  const f=FB();
+  return new Promise((resolve,reject)=>{
+    let done=false, un=null;
+    const timer=setTimeout(()=>{ if(done) return; done=true; if(un) un(); reject(new Error(BUSY_MSG)); }, ms);
+    un=f.onValue(f.ref(f.db,".info/connected"), snap=>{
+      if(done || snap.val()!==true) return;
+      done=true; clearTimeout(timer); setTimeout(()=>{ if(un) un(); },0); resolve();
+    });
+  });
+}
 function touch(){ net.lastActive=Date.now(); }
-function resumeNet(){ net.paused=false; touch(); if(inRoom()) netOn(); render(); }
+function resumeNet(){ net.paused=false; touch(); if(inRoom()){ netOn(); waitConnected(10000).catch(e=>{ if(inRoom()) setError(e.message); }); } render(); }
 function netCheck(){
   if(inRoom() && net.online && !net.paused && Date.now()-net.lastActive > NET.idleMs){ net.paused=true; netOff(); render(); }
 }
@@ -415,7 +429,7 @@ document.addEventListener("visibilitychange", ()=>{
     if(inRoom()) net.hiddenTimer=setTimeout(()=>{ if(document.visibilityState==="hidden") netOff(); }, NET.hiddenMs);
   } else {
     touch();
-    if(inRoom() && !net.paused) netOn();
+    if(inRoom() && !net.paused){ netOn(); waitConnected(10000).catch(e=>{ if(inRoom()) setError(e.message); }); }
   }
 });
 ["pointerdown","keydown"].forEach(t=>document.addEventListener(t, touch, {passive:true}));
@@ -473,6 +487,7 @@ async function createRoom(){
   const name=ui.name.trim(); if(!name) return setError("名前を入れてください");
   ui.busy=true; render(); netOn();
   try{
+    await waitConnected();
     const f=FB(); let code=null;
     for(let i=0;i<8;i++){ const c=rid(4).toUpperCase(); const s=await f.get(f.ref(f.db, roomPath(c))); if(!s.exists()){ code=c; break; } }
     if(!code) throw new Error("ルームを作れませんでした。もう一度試してください。");
@@ -488,6 +503,7 @@ async function joinRoom(code){
   code=(code||"").trim().toUpperCase(); if(!/^[A-Z0-9]{4}$/.test(code)) return setError("4文字のルームコードを入れてください");
   ui.busy=true; render(); netOn();
   try{
+    await waitConnected();
     const f=FB();
     const s=await f.get(f.ref(f.db, roomPath(code)));
     if(!s.exists()) ui.error="そのルームは見つかりません。コードを確かめてください。";
@@ -609,7 +625,7 @@ function homeView(){
     <input type="text" id="nm" maxlength="10" placeholder="例：太郎" value="${esc(ui.name)}" autocomplete="nickname">
     ${ui.fb ? `${ui.inviteCode?`<button class="primary" data-a="join" ${ui.busy?"disabled":""}>ルーム ${esc(ui.inviteCode)} に参加する</button>`:""}
       <button class="${ui.inviteCode?"ghost":"primary"}" data-a="create" ${ui.busy?"disabled":""}>ルームを作る</button>
-      <div class="row"><input type="text" id="jc" class="grow" maxlength="4" placeholder="ルームコード" value="${esc(ui.inviteCode)}" style="text-transform:uppercase;letter-spacing:.2em" autocomplete="off"><button data-a="join" ${ui.busy?"disabled":""}>参加する</button></div>`
+      <div class="row"><input type="text" id="jc" class="grow" maxlength="4" placeholder="ルームコード" value="${esc(ui.joinCode||ui.inviteCode)}" style="text-transform:uppercase;letter-spacing:.2em" autocomplete="off"><button data-a="join" ${ui.busy?"disabled":""}>参加する</button></div>`
       : `<p class="notice">${!ui.dbReady?"オンライン同期を準備中…":(window.FIREBASE_CONFIG && !/YOUR_/.test(window.FIREBASE_CONFIG.databaseURL||"YOUR_"))?"サーバーにつながりませんでした。電波を確認して開き直すか、下の「1台で遊ぶ」を使ってください。":"オンライン対戦はまだ設定されていません（設置した人がFirebaseの設定を書き込む必要があります）。下の「1台で遊ぶ」は今すぐ使えます。"}</p>`}
   </div>
   <div class="panel">
@@ -902,6 +918,7 @@ document.addEventListener("input", e=>{
   const t=e.target;
   if(t.id==="nm"){ ui.name=t.value; store.set("kp.name",t.value); }
   else if(/^ln\d$/.test(t.id)) ui.localNames[+t.id.slice(2)]=t.value;
+  else if(t.id==="jc") ui.joinCode=t.value;
 });
 document.addEventListener("keydown", e=>{ if(e.key==="Enter" && e.target.id==="jc") joinRoom(e.target.value); });
 document.addEventListener("click", e=>{
@@ -944,6 +961,7 @@ window.kpBackend = async (fb)=>{
   if(fb && ui.code && !ui.inviteCode){
     netOn();
     try{
+      await waitConnected();
       const s=await fb.get(fb.ref(fb.db, roomPath(ui.code)));
       const v=s.exists()?s.val():null, room=decodeRoom(v);
       const seat=v && (v.seats||{})[MY_ID];
@@ -953,7 +971,7 @@ window.kpBackend = async (fb)=>{
         ui.mySeat = seat ? {name:seat.name, joined:seat.joined||Date.now()} : {name:inGame.name, joined:Date.now()};
         ui.mode="remote"; subscribe(ui.code);
       } else store.del("kp.room");
-    }catch(e){}
+    }catch(e){ if(e && e.message===BUSY_MSG) ui.error=e.message; }
     if(!inRoom()) netOff();
   }
   render();
